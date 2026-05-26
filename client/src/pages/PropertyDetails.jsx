@@ -4,10 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { toast } from 'sonner';
-import { getPropertyDetails, deleteProperty, downloadAgreement } from '../api/property';
+import { getPropertyDetails, deleteProperty, downloadAgreement, getSimilarProperties } from '../api/property';
 import axios from 'axios';
 
-// ... (rest of imports)
 import { scheduleVisit } from '../api/booking';
 import { addToFavorites, removeFromFavorites, getMyFavorites } from '../api/favorite';
 import { getReviews, addReview } from '../api/review';
@@ -18,7 +17,7 @@ import L from 'leaflet';
 import ChatBot from '../components/ChatBot';
 import Navbar from '../components/Navbar';
 import { Card, PremiumButton, Badge, Skeleton, FuturisticInput } from '../components/UIElements';
-import { MapPin, Calendar, Clock, Phone, Mail, ShieldCheck, Flag, Star, ChevronLeft, Zap, Sparkles, MessageSquare, ChevronRight, Home } from 'lucide-react';
+import { MapPin, Calendar, Clock, Phone, Mail, ShieldCheck, Flag, Star, ChevronLeft, Zap, Sparkles, MessageSquare, ChevronRight, Home, ArrowRight } from 'lucide-react';        
 
 // Fix for default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -32,6 +31,7 @@ export default function PropertyDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [property, setProperty] = useState(null);
+  const [similarProperties, setSimilarProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [visitDate, setVisitDate] = useState('');
@@ -50,6 +50,7 @@ export default function PropertyDetails() {
   useEffect(() => {
     fetchData();
     fetchReviews();
+    fetchSimilar();
   }, [id, isAuthenticated]);
 
   useEffect(() => {
@@ -57,6 +58,17 @@ export default function PropertyDetails() {
       fetchIntelligence();
     }
   }, [property]);
+
+  const fetchSimilar = async () => {
+    try {
+      const res = await getSimilarProperties(id);
+      if (res.success) {
+        setSimilarProperties(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch similar properties', err);
+    }
+  };
 
   const fetchIntelligence = async () => {
     if (!property?.city && !property?.locality && !property?.address) return;
@@ -81,7 +93,6 @@ export default function PropertyDetails() {
     setLoading(true);
     try {
       const response = await getPropertyDetails(id);
-      // Fixed response handling
       const data = response.success ? response.property : response;
       setProperty(data);
 
@@ -189,11 +200,10 @@ export default function PropertyDetails() {
 
   if (!property) return <div className="p-20 text-center text-4xl font-black text-accent italic animate-float">SIGNAL LOST: PROPERTY NOT FOUND</div>;
 
-  const imageUrl = property.image 
+  const imageUrl = property.image
     ? (property.image.startsWith('http') ? property.image : `http://localhost:5000${property.image}`)
     : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200';
 
-  // Safe Amenities Parsing
   let amenities = [];
   try {
     amenities = typeof property.amenities === 'string' ? JSON.parse(property.amenities) : (property.amenities || []);
@@ -211,14 +221,12 @@ export default function PropertyDetails() {
     <div className="bg-background min-h-screen text-white">
       <Navbar />
 
-      {/* Background Decorative Blobs */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-1/4 -left-24 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]" />
         <div className="absolute bottom-1/4 -right-24 w-[600px] h-[600px] bg-accent/5 rounded-full blur-[150px]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 pt-32">
-        {/* Navigation Breadcrumb */}
         <div className="flex justify-between items-center mb-12">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -244,9 +252,7 @@ export default function PropertyDetails() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-          {/* Left Column */}
           <div className="lg:col-span-2 space-y-16">
-            {/* Immersive Image Gallery */}
             <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -271,7 +277,6 @@ export default function PropertyDetails() {
               </motion.div>
             </div>
 
-            {/* Core Info Architecture */}
             <section className="space-y-12">
               <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                 <div className="flex-1">
@@ -289,7 +294,7 @@ export default function PropertyDetails() {
                 </div>
                 <div className="flex flex-col items-end gap-4">
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-1">Market Valuation</p>
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-1">Market Valuation</p>
                     <p className="text-5xl font-black text-gradient tracking-tighter">{formatPrice(property.price)}</p>
                   </div>
                   <PremiumButton
@@ -312,7 +317,7 @@ export default function PropertyDetails() {
                 ].map((item, i) => (
                   <div key={i} className="glass-card p-8 text-center group hover:border-primary/50 transition-all">
                     <div className="flex justify-center mb-4 text-primary group-hover:scale-125 transition-transform">{item.icon}</div>
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-2">{item.label}</p>
+                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">{item.label}</p>
                     <p className={`text-xl font-black text-white ${item.capitalize ? 'capitalize' : ''}`}>
                       {item.value}
                     </p>
@@ -347,10 +352,9 @@ export default function PropertyDetails() {
                 </div>
               </div>
 
-              {/* Neighborhood Intelligence */}
               <div className="space-y-10 pt-16 border-t border-white/5">
                 <h3 className="text-3xl font-black tracking-tighter">Neighborhood Intelligence</h3>
-                
+
                 {intelLoading ? (
                   <div className="col-span-full py-10 flex flex-col items-center justify-center gap-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -362,7 +366,7 @@ export default function PropertyDetails() {
                       { title: 'Education', icon: '🎓', list: intelligence?.education || [], color: 'primary' },
                       { title: 'Healthcare', icon: '🏥', list: intelligence?.healthcare || [], color: 'accent' },
                       { title: 'Connectivity', icon: '🚉', list: intelligence?.connectivity || [], color: 'primary' },
-                      { title: 'Lifestyle', icon: '🛒', list: intelligence?.lifestyle || [], color: 'accent' }
+                      { title: 'Lifestyle', icon: '🛍️', list: intelligence?.lifestyle || [], color: 'accent' }
                     ].map((cat, i) => (
                       <div key={i} className="glass-card p-1 group">
                         <div className="bg-secondary/40 p-8 rounded-[30px] flex gap-6 h-full">
@@ -386,7 +390,6 @@ export default function PropertyDetails() {
                 )}
               </div>
 
-              {/* Community Sync (Reviews) */}
               <div className="space-y-12 pt-16 border-t border-white/5">
                 <div className="flex justify-between items-center">
                   <h3 className="text-3xl font-black tracking-tighter flex items-center gap-3 italic">
@@ -410,7 +413,7 @@ export default function PropertyDetails() {
                           onClick={() => setNewReview({ ...newReview, rating: star })}
                           className={`text-4xl transition-all ${newReview.rating >= star ? 'text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'text-white/10'}`}
                         >
-                          Ã¢Ëœâ€¦
+                          ★
                         </motion.button>
                       ))}
                     </div>
@@ -442,7 +445,7 @@ export default function PropertyDetails() {
                           </div>
                           <div>
                             <p className="font-black text-xl text-white">{review.userName || 'Anonymous User'}</p>
-                            <p className="text-[10px] text-text-muted font-black uppercase tracking-[0.2em]">{new Date(review.createdAt).toLocaleDateString()}</p>  
+                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">{new Date(review.createdAt).toLocaleDateString()}</p>  
                           </div>
                         </div>
                         <div className="flex gap-1 text-yellow-400">
@@ -462,10 +465,42 @@ export default function PropertyDetails() {
                   )}
                 </div>
               </div>
+
+              {/* Similar Properties System */}
+              <div className="space-y-12 pt-16 border-t border-white/5">
+                <h3 className="text-3xl font-black tracking-tighter flex items-center gap-3 italic">
+                  <Zap className="text-primary w-8 h-8" /> You May Also Like
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {similarProperties.map((prop) => (
+                    <Link to={`/properties/${prop.id}`} key={prop.id} className="group">
+                      <div className="glass-card overflow-hidden hover:border-primary/50 transition-all">
+                        <div className="h-48 overflow-hidden relative">
+                          <img 
+                            src={prop.image ? `http://localhost:5000${prop.image}` : 'https://via.placeholder.com/400x300'} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          <div className="absolute top-4 right-4">
+                            <Badge variant="glass" className="text-[10px]">{prop.category}</Badge>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                          <h4 className="font-black text-xl mb-2 truncate group-hover:text-primary transition-colors">{prop.title}</h4>
+                          <div className="flex justify-between items-center">
+                            <p className="text-primary font-black text-lg">{formatPrice(prop.price)}</p>
+                            <div className="flex items-center text-text-muted text-xs font-bold">
+                              <MapPin className="w-3 h-3 mr-1" /> {prop.locality}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </section>
           </div>
 
-          {/* Right Column: Tactical Actions */}
           <div className="space-y-12">
             <div className="sticky top-32">
               <Card className="p-10 !bg-secondary-dark !rounded-[48px] border-white/5 shadow-[0_0_80px_rgba(0,0,0,0.8)] group">
@@ -568,7 +603,6 @@ export default function PropertyDetails() {
         </div>
       </div>
 
-      {/* Report Modal protocol */}
       <AnimatePresence>
         {showReportModal && (
           <div className="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center z-[70] p-6">

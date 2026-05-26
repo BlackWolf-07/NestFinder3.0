@@ -1,10 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const { recommendProperties, propertyChat, generalAssistant } = require('../controllers/aiController');
+
+const {
+  recommendProperties,
+  propertyChat,
+  generalAssistant
+} = require('../controllers/aiController');
+
 const { auth } = require('../middlewares/auth');
 
-router.post('/recommend', auth, recommendProperties);
+// Public recommendation route
+router.post('/recommend', recommendProperties);
+
 router.post('/chat/:id', propertyChat);
+
 router.post('/assistant', generalAssistant);
 
 module.exports = router;

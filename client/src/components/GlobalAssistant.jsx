@@ -83,7 +83,7 @@ export default function GlobalAssistant({ onFilterChange }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your search request..."
-              className="flex-1 p-3 bg-white border rounded-2xl outline-none focus:ring-2 focus:ring-primary text-sm shadow-inner"
+              className="flex-1 p-3 bg-white border rounded-2xl outline-none focus:ring-2 focus:ring-primary text-sm shadow-inner text-gray-900 placeholder-gray-400"
             />
             <button className="bg-primary text-white p-3 rounded-2xl hover:scale-110 active:scale-95 transition shadow-lg shadow-blue-500/30">
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

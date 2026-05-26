@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAiRecommendations } from '../api/ai';
@@ -31,7 +31,7 @@ const STEPS = [
     subtitle: "What makes a house feel like a home to you?",
     icon: <Heart className="w-10 h-10" />,
     fields: ["lifestyle", "amenities"],
-    options: { 
+    options: {
       lifestyle: ["family", "bachelor", "pet-friendly", "student"],
       amenities: ["WiFi", "Parking", "Gym", "Lift", "Security", "Pool", "Garden"]
     }
@@ -73,9 +73,15 @@ export default function Onboarding() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const recommendations = await getAiRecommendations(data);
+      const response = await getAiRecommendations(data);
       toast.success('AI Discovery Complete! Analyzing results...');
-      navigate('/recommendations', { state: { recommendations, preferences: data } });
+      navigate('/recommendations', { 
+        state: { 
+          recommendations: response.recommendations || [], 
+          summary: response.summary || '',
+          preferences: data 
+        } 
+      });
     } catch (err) {
       toast.error('AI Recommendation failed. Please try again.');
     } finally {
@@ -108,21 +114,21 @@ export default function Onboarding() {
 
       <Card className="max-w-4xl w-full !rounded-[40px] overflow-hidden bg-white/90 backdrop-blur-xl border-white/20 shadow-2xl relative z-10">
         <div className="h-2 bg-gray-100/50">
-          <motion.div 
-            className="h-full bg-primary" 
+          <motion.div
+            className="h-full bg-primary"
             initial={{ width: 0 }}
             animate={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
             transition={{ duration: 0.8, ease: "circOut" }}
           />
         </div>
-        
+
         <div className="p-10 md:p-14">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12 pb-8 border-b border-gray-100">
             <div className="flex items-center gap-6">
               <Link to="/" className="flex items-center space-x-3 group relative z-10">
                 <motion.div
                   whileHover={{ rotate: 15, scale: 1.1 }}
-                  className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20"
+                  className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20" 
                 >
                   <Home className="w-7 h-7" />
                 </motion.div>
@@ -195,11 +201,11 @@ export default function Onboarding() {
                       </button>
                     </div>
                     {isCustomCity && (
-                      <motion.input 
+                      <motion.input
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        type="text" 
-                        placeholder="Enter Indian City (e.g. Kolkata, Bangalore)" 
+                        type="text"
+                        placeholder="Enter Indian City (e.g. Kolkata, Bangalore)"
                         className="w-full p-5 bg-gray-50 border-4 border-primary/20 rounded-[24px] outline-none focus:border-primary focus:bg-white transition-all font-black text-xl text-black"
                         value={data.city}
                         onChange={(e) => updateData('city', e.target.value)}
@@ -237,11 +243,11 @@ export default function Onboarding() {
                           </button>
                         </div>
                         {isCustomLocality && (
-                          <motion.input 
+                          <motion.input
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            type="text" 
-                            placeholder="Enter Locality Name" 
+                            type="text"
+                            placeholder="Enter Locality Name"
                             className="w-full p-5 bg-gray-50 border-4 border-primary/20 rounded-[24px] outline-none focus:border-primary focus:bg-white transition-all font-black text-xl text-black"
                             value={data.locality}
                             onChange={(e) => updateData('locality', e.target.value)}
@@ -259,9 +265,9 @@ export default function Onboarding() {
                     <label className="text-xs font-black text-secondary uppercase tracking-widest px-1">Maximum Investment (INR)</label>
                     <div className="relative">
                       <IndianRupee className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
-                      <input 
-                        type="number" 
-                        placeholder="50000" 
+                      <input
+                        type="number"
+                        placeholder="50000"
                         className="w-full pl-14 pr-5 py-5 bg-gray-50 border-4 border-transparent rounded-[24px] outline-none focus:border-primary/20 focus:bg-white transition-all font-black text-xl text-black"
                         value={data.budget}
                         onChange={(e) => updateData('budget', e.target.value)}
@@ -270,9 +276,9 @@ export default function Onboarding() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black text-secondary uppercase tracking-widest px-1">Bedrooms (BHK)</label>
-                    <input 
-                      type="number" 
-                      placeholder="2" 
+                    <input
+                      type="number"
+                      placeholder="2"
                       className="w-full p-5 bg-gray-50 border-4 border-transparent rounded-[24px] outline-none focus:border-primary/20 focus:bg-white transition-all font-black text-xl text-black"
                       value={data.bhk}
                       onChange={(e) => updateData('bhk', e.target.value)}
@@ -317,15 +323,15 @@ export default function Onboarding() {
           </AnimatePresence>
 
           <div className="mt-16 flex justify-between items-center">
-            <button 
+            <button
               onClick={() => step > 0 ? setStep(step - 1) : navigate('/')}
               className="flex items-center gap-2 px-6 py-2 text-secondary font-black hover:text-primary transition group"
             >
               <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
               {step > 0 ? 'Previous Phase' : 'Exit to Home'}
             </button>
-            
-            <PremiumButton 
+
+            <PremiumButton
               onClick={handleNext}
               disabled={loading}
               className="!px-12 py-5 !rounded-3xl text-xl flex items-center gap-3 shadow-2xl shadow-primary/30"

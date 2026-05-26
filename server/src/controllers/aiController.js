@@ -1,33 +1,38 @@
-const geminiService = require('../services/geminiService');
+﻿const recommendationEngine = require('../ai/recommendationEngine');
+const aiService = require('../ai/aiService');
 const Property = require('../models/Property');
+
+/**
+ * AI Controller
+ * Orchestrates recommendation and chat logic.
+ */
 
 exports.recommendProperties = async (req, res) => {
   try {
-    const userPreferences = req.body;
+    const preferences = req.body;
     
-    // Fetch relevant properties for AI to filter
-    const { properties: allProperties } = await Property.getAll({ 
-      city: userPreferences.city,
-      type: userPreferences.type
-    });
+    // 1. Get deterministic recommendations from backend engine
+    const recommendations = await recommendationEngine.getRecommendations(preferences);
 
-    if (allProperties.length === 0) {
-      return res.json([]);
+    if (recommendations.length === 0) {
+      return res.json({
+        success: true,
+        recommendations: [],
+        summary: "No properties found matching your criteria. Try adjusting your filters."
+      });
     }
 
-    const aiMatches = await geminiService.getRecommendations(userPreferences, allProperties);
+    // 2. Use AI for a natural language summary/explanation
+    const summary = await aiService.getSummary(preferences, recommendations);
 
-    // Combine AI reasons with property data
-    const recommendations = aiMatches.map(match => {
-      const prop = allProperties.find(p => p.id === match.id);
-      if (!prop) return null;
-      return { ...prop, aiReason: match.reason };
-    }).filter(p => p !== null);
-
-    res.json(recommendations);
+    res.json({
+      success: true,
+      recommendations,
+      summary
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'AI Recommendation failed' });
+    console.error("Recommendation Controller Error:", error);
+    res.status(500).json({ success: false, error: 'AI Recommendation failed' });
   }
 };
 
@@ -35,21 +40,28 @@ exports.propertyChat = async (req, res) => {
   try {
     const { message, history } = req.body;
     const property = await Property.getById(req.params.id);
-    if (!property) return res.status(404).json({ error: 'Property not found' });
+    
+    if (!property) {
+      return res.status(404).json({ success: false, error: 'Property not found' });
+    }
 
-    const aiResponse = await geminiService.getPropertyChatResponse(property, message, history);
-    res.json({ reply: aiResponse });
+    const aiResponse = await aiService.getChatResponse(property, message, history || []);
+    res.json({ success: true, reply: aiResponse });
   } catch (error) {
-    res.status(500).json({ error: 'Chat failed' });
+    console.error("Chat Controller Error:", error);
+    res.status(500).json({ success: false, error: 'Chat failed' });
   }
 };
 
 exports.generalAssistant = async (req, res) => {
   try {
     const { message } = req.body;
+    // For general assistant, we can still use the old geminiService or refactor it here.
+    // Keeping it simple for now by calling the AI service directly if needed.
+    const geminiService = require('../services/geminiService');
     const response = await geminiService.getGeneralAssistantResponse(message);
-    res.json(response);
+    res.json({ success: true, ...response });
   } catch (error) {
-    res.status(500).json({ error: 'Assistant failed' });
+    res.status(500).json({ success: false, error: 'Assistant failed' });
   }
 };

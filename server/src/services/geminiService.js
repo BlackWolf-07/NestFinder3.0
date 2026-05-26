@@ -4,7 +4,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 exports.getRecommendations = async (userPreferences, properties) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `
       You are an expert real estate consultant for "NestFinder".
@@ -54,13 +54,30 @@ exports.getRecommendations = async (userPreferences, properties) => {
 
 exports.getPropertyChatResponse = async (property, message, history = []) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const chat = model.startChat({
       history: history.map(h => ({
         role: h.role === 'user' ? 'user' : 'model',
         parts: [{ text: h.text }],
       })),
     });
+
+    // Safe amenities parsing - handles comma-separated strings and JSON arrays
+    let amenitiesText = '';
+    try {
+      const raw = property.amenities;
+      if (Array.isArray(raw)) {
+        amenitiesText = raw.join(', ');
+      } else if (typeof raw === 'string') {
+        if (raw.trim().startsWith('[')) {
+          amenitiesText = JSON.parse(raw).join(', ');
+        } else {
+          amenitiesText = raw;
+        }
+      }
+    } catch {
+      amenitiesText = property.amenities || '';
+    }
 
     const context = `
       You are an AI assistant for a specific property listing on NestFinder.
@@ -72,7 +89,7 @@ exports.getPropertyChatResponse = async (property, message, history = []) => {
       Category: ${property.category}
       BHK: ${property.bhk}
       Furnishing: ${property.furnishing}
-      Amenities: ${JSON.parse(property.amenities).join(', ')}
+      Amenities: ${amenitiesText}
       Description: ${property.description}
 
       Answer the user's question accurately based ONLY on the details provided above. 
@@ -91,7 +108,7 @@ exports.getPropertyChatResponse = async (property, message, history = []) => {
 
 exports.getGeneralAssistantResponse = async (message) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `
       You are the NestFinder General Assistant. Your goal is to help users find properties using natural language.
@@ -120,6 +137,7 @@ exports.getGeneralAssistantResponse = async (message) => {
     const cleanJson = text.replace(/```json|```/gi, '').trim();
     return JSON.parse(cleanJson);
   } catch (error) {
+    console.error("General Assistant Error:", error);
     return { filters: {}, reply: "I'm here to help you find your dream home. What are you looking for?" };
   }
 };

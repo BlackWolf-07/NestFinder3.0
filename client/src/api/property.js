@@ -1,4 +1,4 @@
-import API from './index';
+﻿import API from './index';
 
 export const getProperties = async (filters) => {
   const response = await API.get('/properties', { params: filters });
@@ -17,6 +17,11 @@ export const getMyProperties = async () => {
 
 export const getPropertyDetails = async (id) => {
   const response = await API.get(`/properties/${id}`);
+  return response.data;
+};
+
+export const getSimilarProperties = async (id) => {
+  const response = await API.get(`/properties/similar/${id}`);
   return response.data;
 };
 
@@ -41,7 +46,7 @@ export const downloadAgreement = async (id) => {
   const response = await API.get(`/properties/${id}/agreement`, {
     responseType: 'blob'
   });
-  
+
   const url = window.URL.createObjectURL(new Blob([response.data]));
   const link = document.createElement('a');
   link.href = url;

@@ -1,10 +1,10 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const { 
   createProperty, getProperties, getMyProperties, 
   getPropertyDetails, updateProperty, deleteProperty,
   getFeaturedProperties, getPropertyById, getLocationIntelligence,
-  downloadAgreement, verifyProperty
+  downloadAgreement, verifyProperty, getSimilarProperties
 } = require('../controllers/propertyController');
 const { auth, authorize } = require('../middlewares/auth');
 const upload = require('../utils/upload');
@@ -13,6 +13,7 @@ router.get('/', getProperties);
 router.get('/featured', getFeaturedProperties);
 router.get('/my', auth, getMyProperties);
 router.get('/intelligence', getLocationIntelligence);
+router.get('/similar/:id', getSimilarProperties); // Added route for similar properties
 router.get('/:id/agreement', auth, downloadAgreement);
 router.get('/:id', getPropertyById);
 

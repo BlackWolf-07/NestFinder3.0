@@ -1,7 +1,8 @@
-const Property = require('../models/Property');
+﻿const Property = require('../models/Property');
 const User = require('../models/User');
 const { generateAgreement } = require('../utils/pdfGenerator');
 const axios = require('axios');
+const similarityEngine = require('../ai/similarityEngine');
 
 exports.downloadAgreement = async (req, res) => {
   try {
@@ -54,7 +55,6 @@ exports.createProperty = async (req, res) => {
     const city = req.body.city || '';
     const address = req.body.address || req.body.location || '';
 
-    // Robust geocoding helper with India bounds validation
     const geocode = async (query) => {
       const res = await axios.get('https://nominatim.openstreetmap.org/search', {
         params: { q: query, format: 'json', limit: 1, countrycodes: 'in' },
@@ -64,7 +64,6 @@ exports.createProperty = async (req, res) => {
       if (res.data && res.data.length > 0) {
         const lat = parseFloat(res.data[0].lat);
         const lon = parseFloat(res.data[0].lon);
-        // Validate coordinates are within India
         if (lat >= 6 && lat <= 37 && lon >= 68 && lon <= 97) {
           return { lat, lon };
         }
@@ -73,17 +72,14 @@ exports.createProperty = async (req, res) => {
     };
 
     try {
-      // Strategy 1: full address + locality + city (most accurate)
       let result = address
         ? await geocode(`${address}, ${locality}, ${city}, India`)
         : null;
 
-      // Strategy 2: locality + city
       if (!result && locality) {
         result = await geocode(`${locality}, ${city}, India`);
       }
 
-      // Strategy 3: city only as last resort
       if (!result && city) {
         result = await geocode(`${city}, India`);
       }
@@ -91,18 +87,13 @@ exports.createProperty = async (req, res) => {
       if (result) {
         latitude = result.lat;
         longitude = result.lon;
-      } else {
-        console.warn(`[GEO] Could not geocode: ${address}, ${city}`);
       }
     } catch (err) {
       console.error('[GEO] Geocoding failed:', err.message);
     }
 
-    // Final fallback: Kolkata coordinates
     latitude = latitude || 22.5726;
     longitude = longitude || 88.3639;
-
-    console.log('FINAL LAT/LNG:', latitude, longitude);
 
     const propertyData = {
       ...req.body,
@@ -186,6 +177,17 @@ exports.getPropertyDetails = async (req, res) => {
   }
 };
 
+exports.getSimilarProperties = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await similarityEngine.getSimilarProperties(id);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error("Similar Properties Error:", error);
+    res.status(500).json({ success: false, error: 'Failed to fetch similar properties' });
+  }
+};
+
 exports.updateProperty = async (req, res) => {
   try {
     const property = await Property.getById(req.params.id);
@@ -215,7 +217,7 @@ exports.deleteProperty = async (req, res) => {
   try {
     const { id } = req.params;
     const property = await Property.getById(id);
-    
+
     if (!property) {
       return res.status(404).json({ success: false, message: 'Property not found' });
     }
@@ -245,7 +247,6 @@ exports.getLocationIntelligence = async (req, res) => {
 
     if (!lat || !lon || lat === 'null' || lon === 'null' || isNaN(parseFloat(lat))) {
       try {
-        // Attempt 1: Full Address + City
         if (location) {
           const geo = await axios.get("https://nominatim.openstreetmap.org/search", {
             params: {
@@ -262,7 +263,6 @@ exports.getLocationIntelligence = async (req, res) => {
           }
         }
 
-        // Attempt 2: City Fallback
         if ((!lat || !lon) && city) {
           const geo = await axios.get("https://nominatim.openstreetmap.org/search", {
             params: {
@@ -283,7 +283,6 @@ exports.getLocationIntelligence = async (req, res) => {
       }
     }
 
-    // Ensure valid coordinates exist for radius search - Final Fallback
     lat = lat || 22.5726;
     lon = lon || 88.3639;
 
@@ -323,12 +322,10 @@ exports.getLocationIntelligence = async (req, res) => {
           overpassQuery,
           { headers: { "Content-Type": "text/plain" }, timeout: 30000 }
         );
-        console.log('[INTEL] Raw elements count:', response.data.elements.length);
-        console.log('[INTEL] Sample:', JSON.stringify(response.data.elements.slice(0, 2)));
 
         response.data.elements.forEach(item => {
           const name = item.tags?.name || item.tags?.['name:en'] || null;
-          if (!name) return; // skip unnamed places
+          if (!name) return;
 
           const amenity = item.tags?.amenity;
           const railway = item.tags?.railway;
@@ -352,7 +349,6 @@ exports.getLocationIntelligence = async (req, res) => {
           }
         });
 
-        // Deduplicate and limit
         data.education = [...new Set(data.education)].slice(0, 5);
         data.healthcare = [...new Set(data.healthcare)].slice(0, 5);
         data.connectivity = [...new Set(data.connectivity)].slice(0, 5);
