@@ -68,7 +68,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.options('*', cors()); // handle preflight requests
+app.options('/{*path}', cors()); // handle preflight requests — fixed for path-to-regexp v8
 
 app.use(morgan('dev'));
 app.use(express.json());
