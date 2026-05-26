@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import Navbar from '../components/Navbar';
 import { Card, PremiumButton, Badge, Skeleton } from '../components/UIElements';
+import { getImageUrl } from '../utils/imageUrl';
 import useAuthStore from '../store/authStore';
 import { Calendar, Clock, MapPin, CheckCircle, XCircle, MoreVertical } from 'lucide-react';
 
@@ -75,7 +76,7 @@ export default function Bookings() {
                   {/* Property Preview */}
                   <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0 border border-border">
                     <img
-                      src={booking.propertyImage ? `http://localhost:5000${booking.propertyImage}` : 'https://via.placeholder.com/200x150'}
+                      src={getImageUrl(booking.propertyImage)}
                       className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
                     />
                   </div>

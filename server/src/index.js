@@ -46,7 +46,30 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
   contentSecurityPolicy: false,
 }));
-app.use(cors({ origin: '*' }));
+
+const allowedOrigins = [
+  'http://localhost:5173',                       // local dev (Vite default)
+  'http://localhost:3000',                       // local dev alt
+  'https://nestfinder30.vercel.app',             // your Vercel URL (update after deploy)
+  /https:\/\/nestfinder30.*\.vercel\.app$/,      // covers all Vercel preview URLs
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow Postman, curl, mobile apps
+    const allowed = allowedOrigins.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    if (allowed) return callback(null, true);
+    return callback(new Error(`CORS blocked: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+app.options('*', cors()); // handle preflight requests
+
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -66,6 +89,15 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to NestFinder API' });
 });
 
+// Health check route for debugging
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -76,4 +108,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-

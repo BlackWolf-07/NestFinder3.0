@@ -12,6 +12,7 @@ import { addToFavorites, removeFromFavorites, getMyFavorites } from '../api/favo
 import { getReviews, addReview } from '../api/review';
 import { reportProperty } from '../api/report';
 import { formatPrice } from '../utils/formatPrice';
+import { getImageUrl } from '../utils/imageUrl';
 import useAuthStore from '../store/authStore';
 import L from 'leaflet';
 import ChatBot from '../components/ChatBot';
@@ -200,8 +201,7 @@ export default function PropertyDetails() {
 
   if (!property) return <div className="p-20 text-center text-4xl font-black text-accent italic animate-float">SIGNAL LOST: PROPERTY NOT FOUND</div>;
 
-  const imageUrl = property.image
-    ? (property.image.startsWith('http') ? property.image : `http://localhost:5000${property.image}`)
+  const imageUrl = getImageUrl(property.image)
     : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1200';
 
   let amenities = [];
@@ -477,7 +477,7 @@ export default function PropertyDetails() {
                       <div className="glass-card overflow-hidden hover:border-primary/50 transition-all">
                         <div className="h-48 overflow-hidden relative">
                           <img 
-                            src={prop.image ? `http://localhost:5000${prop.image}` : 'https://via.placeholder.com/400x300'} 
+                            src={getImageUrl(prop.image)} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                           <div className="absolute top-4 right-4">

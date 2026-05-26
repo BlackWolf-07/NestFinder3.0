@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, MapPin, ArrowRight, RefreshCw, Zap } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { Card, PremiumButton, Badge } from '../components/UIElements';
+import { getImageUrl } from '../utils/imageUrl';
 
 // Safe image parser
 function parseImages(imagesField) {
@@ -125,7 +126,7 @@ export default function Recommendations() {
                       <img
                         src={
                           images[0]
-                            ? `http://localhost:5000${images[0].startsWith('/') ? images[0] : '/uploads/' + images[0]}`
+                            ? getImageUrl(images[0].startsWith('/') ? images[0] : '/uploads/' + images[0])
                             : "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%231e293b'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%2364748b'%3ENo Image%3C/text%3E%3C/svg%3E"
                         }
                         alt={property.title || 'Property image'}

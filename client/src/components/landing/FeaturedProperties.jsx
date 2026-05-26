@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../../utils/imageUrl';
 import { ChevronRight, ArrowRight, MapPin, Bed, Star } from 'lucide-react';
 import { Badge, PremiumButton } from '../UIElements';
 import { useNavigate } from 'react-router-dom';
@@ -24,7 +25,7 @@ const PropertySlide = ({ property, setProperties }) => {
   };
 
   const imageUrl = property.image 
-    ? (property.image.startsWith('http') ? property.image : `http://localhost:5000${property.image}`)
+    ? getImageUrl(property.image)
     : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=800';
 
   const formattedPrice = new Intl.NumberFormat('en-IN', {

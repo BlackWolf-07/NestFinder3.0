@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getMyProperties, deleteProperty } from '../api/property';
+import { getImageUrl } from '../utils/imageUrl';
 import useAuthStore from '../store/authStore';
 import Navbar from '../components/Navbar';
 import { Card, PremiumButton, Badge, Skeleton } from '../components/UIElements';
@@ -46,6 +47,12 @@ export default function Dashboard() {
         toast.error('Purge failure.');
       }
     }
+  };
+
+  const getFirstImage = (images) => {
+    if (!images) return null;
+    const arr = typeof images === 'string' ? JSON.parse(images) : images;
+    return arr[0] || null;
   };
 
   if (!user) return <div className="bg-background min-h-screen flex items-center justify-center text-white font-black italic">SYNCHRONIZING PROFILE...</div>;
@@ -114,7 +121,7 @@ export default function Dashboard() {
               <Card className="group h-full flex flex-col relative overflow-hidden">
                 <div className="relative h-56 overflow-hidden m-2 rounded-[32px]">
                   <img
-                    src={(property.images && (typeof property.images === 'string' ? JSON.parse(property.images) : property.images)[0]) ? `http://localhost:5000${(typeof property.images === 'string' ? JSON.parse(property.images) : property.images)[0]}` : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=600'}
+                    src={getImageUrl(getFirstImage(property.images))}
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
                   <div className="absolute top-4 left-4 flex gap-2">
