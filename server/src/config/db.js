@@ -23,7 +23,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  ssl: { rejectUnauthorized: false }, // always enable SSL — required for Railway proxy
 });
 
 const db = pool.promise();
