@@ -48,19 +48,20 @@ app.use(helmet({
 }));
 
 const allowedOrigins = [
-  'http://localhost:5173',                       // local dev (Vite default)
-  'http://localhost:3000',                       // local dev alt
-  'https://nestfinder30.vercel.app',             // your Vercel URL (update after deploy)
-  /https:\/\/nestfinder30.*\.vercel\.app$/,      // covers all Vercel preview URLs
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://nestfinder-three.vercel.app',         // your actual Vercel URL
+  /https:\/\/nestfinder.*\.vercel\.app$/,        // covers all Vercel variations
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow Postman, curl, mobile apps
+    if (!origin) return callback(null, true);
     const allowed = allowedOrigins.some(o =>
       typeof o === 'string' ? o === origin : o.test(origin)
     );
     if (allowed) return callback(null, true);
+    console.log('CORS blocked:', origin); // log blocked origins for debugging
     return callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
@@ -68,7 +69,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.options('/{*path}', cors()); // handle preflight requests — fixed for path-to-regexp v8
+app.options('/{*path}', cors());
 
 app.use(morgan('dev'));
 app.use(express.json());
